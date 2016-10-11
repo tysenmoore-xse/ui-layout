@@ -1,3 +1,55 @@
+﻿
+# Reason for the Fork:
+
+There were a few missing features from what I could tell:
+- Could not dynamically change the flow
+- Could not dynamically hide a contianer
+
+The code changes were done quickly and may be a little hackish.  Anyone who wants to clean this up is more than welcome.
+
+**NOTE:** Exhaustive testing has not been done.  Currently the main usecase has been:
+```
+----------------------------------------
+|        |                             |
+|        |                             |
+|        |------------------------------
+|        |                             |
+----------------------------------------
+```  
+
+## New to uiLayout
+
+### flow
+
+Type: `String`
+Default: `'row'`
+`flow: row | column`
+
+This attribute is to dynamically control the container flow.  See original `flow` documentation for more details.
+
+```
+<div ui-layout-container size="20%" max-size="50%"
+        flow="{{contFlow}}"
+</div>
+...
+$scope.contFlow = 'column';
+```
+
+
+## New to uiLayoutContainer
+
+### show-container
+
+This attribute is to dynamically control the container.  If this is set to false at startup the container will not be shown.
+
+```
+<div ui-layout-container size="20%" max-size="50%"
+        show-container="{{showLeft}}"
+</div>
+```
+
+------
+
 # UI.Layout directive [![Build Status](https://travis-ci.org/angular-ui/ui-layout.svg)](https://travis-ci.org/angular-ui/ui-layout)
 
 This directive allows you to split stuff !
