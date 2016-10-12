@@ -829,7 +829,7 @@ angular.module('ui.layout', [])
     return ctrl;
   }])
 
-  .directive('uiLayout', ['$window', function($window) {
+  .directive('uiLayout', ['$window', 'LayoutContainer', function($window, LayoutContainer) {
     return {
       restrict: 'AE',
       controller: 'uiLayoutCtrl',
@@ -844,6 +844,44 @@ angular.module('ui.layout', [])
 
         function onResize() {
           scope.$evalAsync(function() {
+
+            //--------------------
+            // HACK: If the container is small enough then the app is resized to
+            //       full screen the container will be zero in size and cannot
+            //       resize itself properly.  This hack code checks for various
+            //       error conditions and attempts to fix specific values.
+            //
+            var i;
+            var numOfSplitbars = 0;
+            for (i = 0; i < ctrl.containers.length; i++) {
+              if (LayoutContainer.isSplitbar(ctrl.containers[i])) {
+                numOfSplitbars++;
+              }
+            }
+
+            var dividerSize = parseInt(ctrl.opts.dividerSize);
+            var elementSize = element[0].getBoundingClientRect()[ctrl.sizeProperties.sizeProperty];
+            var availableSize = elementSize - (dividerSize * numOfSplitbars);
+
+            for (i = 0; i < ctrl.containers.length; i++) {
+              if (!LayoutContainer.isSplitbar(ctrl.containers[i])) {
+                if ((ctrl.containers[i].size <= 0) && (ctrl.containers[i].isShown)){
+                  if(ctrl.isPercent(ctrl.containers[i].uncollapsedSize)) {
+                    ctrl.containers[i].size = ctrl.convertToPixels(ctrl.containers[i].uncollapsedSize, availableSize);
+                  } else {
+                    ctrl.containers[i].size = parseInt(ctrl.containers[i].uncollapsedSize);
+                  }
+                  if ((isNaN(ctrl.containers[i].size)) || (ctrl.containers[i].size <= 0)) {
+                    ctrl.containers[i].size = 200;
+                  }
+                }
+                if (ctrl.containers[i].maxSize === 0) {
+                  ctrl.containers[i].maxSize = ctrl.containers[i].size;
+                }
+              }
+            }
+            //--------------------
+
             ctrl.calculate();
           });
         }
