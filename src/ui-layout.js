@@ -35,6 +35,10 @@ angular.module('ui.layout', [])
 
     Layout.addLayout(ctrl);
 
+    if (angular.isUndefined(opts.flow)) {
+      opts.flow = $scope.flow;
+    }
+
     ctrl.containers = [];
     ctrl.movingSplitbar = null;
     ctrl.bounds = $element[0].getBoundingClientRect();
@@ -78,6 +82,8 @@ angular.module('ui.layout', [])
             return;
         }
 
+        var oldSizeProperties = (old === 'row') ? rowProperties : colProperties;
+
         // Reset the opts based on the settings
         var origOpts = angular.extend({}, $scope.$eval($attrs.uiLayout), $scope.$eval($attrs.options));
         origOpts.sizes = origOpts.sizes || [];
@@ -101,6 +107,17 @@ angular.module('ui.layout', [])
         $element.css('left',   '');
         $element.css('width',  '');
         $element.css('height', '');
+
+        var szMax = ctrl.bounds[oldSizeProperties.sizeProperty];
+        var percentCont;
+        var usedSpace = 0;
+
+        // Remove  the divider sizes from the overall size
+        for (x = 0; x < ctrl.containers.length; x++) {
+          if (LayoutContainer.isSplitbar(ctrl.containers[x])) {
+            szMax -= ctrl.containers[x].size;
+          }
+        }
 
         for(x = 0; x < ctrl.containers.length; x++) {
 
@@ -153,6 +170,43 @@ angular.module('ui.layout', [])
                 }
               }
             }
+
+            usedSpace += ctrl.containers[x].size;
+          }
+          else {
+            // Resize the container based on the original percentage used
+            // so we do not exceed the new sizeProperty bounds.
+            // (round down to the tenths place)
+            percentCont = Math.floor((ctrl.containers[x].size / szMax)*10);
+            if (percentCont === 0) {
+              percentCont = 1;
+            }
+            percentCont = percentCont / 10;
+
+            opts.sizes[x] = Math.floor(ctrl.bounds[ctrl.sizeProperties.sizeProperty] * percentCont);
+            usedSpace += opts.sizes[x];
+
+            if (x+1 === ctrl.containers.length) {
+              // Last node, add remainder of space
+              opts.sizes[x] += (ctrl.bounds[ctrl.sizeProperties.sizeProperty] - usedSpace);
+
+              if ((angular.isNumber(opts.minSizes[x])) &&
+                  (opts.sizes[x] < opts.minSizes[x])) {
+                // Remove some space from the previous container
+                var cont = ctrl.getPreviousContainer(ctrl.containers[x]);
+                if (cont !== null) {
+                  var szDiff = opts.minSizes[x] - opts.sizes[x];
+                  opts.sizes[x] = opts.minSizes[x]; // will happen later anyways
+                  if ((cont.size - szDiff) > 0) {
+                    cont.size -= szDiff;
+                    cont.uncollapsedSize -= szDiff;
+                  }
+                }
+              }
+            }
+
+            ctrl.containers[x].size = opts.sizes[x];
+            ctrl.containers[x].uncollapsedSize = opts.sizes[x];
           }
         }
 
@@ -160,25 +214,25 @@ angular.module('ui.layout', [])
           ctrl.calculate();
 
           for (x = 0; x < ctrl.containers.length; x++) {
+
             obj = ctrl.containers[x];
+
+            // width | height
+            obj.element.css(ctrl.sizeProperties.sizeProperty,  obj.size + 'px');
+
             if (ctrl.isUsingColumnFlow) {
 
               if (angular.isDefined(obj.left)) {
                 obj.element.css('left',   obj.left + 'px');
-              }
-              if (angular.isDefined(obj.width)) {
-                obj.element.css('width',  obj.width + 'px');
               }
 
             } else {
               if (angular.isDefined(obj.top)) {
                 obj.element.css('top',    obj.top + 'px');
               }
-              if (angular.isDefined(obj.height)) {
-                obj.element.css('height', obj.height + 'px');
-              }
             }
           }
+
         });
     });
 
@@ -479,16 +533,26 @@ angular.module('ui.layout', [])
 
                 var cont = ctrl.getPreviousContainer( c );
                 if (cont !== null) {
+                  // Add to the PREVIOUS container the space we would have used
+                  opts.sizes[cont.index] += opts.sizes[i];
+
                   cont.size += opts.sizes[i];
+                  usedSpace += opts.sizes[i];
+                  opts.sizes[i] = 0;
                 }
                 else {
                   cont = ctrl.getNextContainer( c );
                   if (cont !== null) {
+                    // Add to the NEXT container the space we would have used
                     if (opts.sizes[cont.index] !== 'auto') {
                       opts.sizes[cont.index] += opts.sizes[i];
+
+                      cont.size += opts.sizes[i];
+                      usedSpace += opts.sizes[i];
+                      opts.sizes[i] = 0;
                     }
                     else {
-                      // TODO:...
+                      //opts.sizes[cont.index] += autoSize;
                     }
                   }
                 }
