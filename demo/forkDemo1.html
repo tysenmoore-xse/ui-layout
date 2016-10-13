@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width">
+
+
+    <base href="../"/>
+    <title>UI.Layout : Simple Text/Demo</title>
+
+    <!-- Le css -->
+    <link href="http://getbootstrap.com/dist/css/bootstrap.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="src/ui-layout.css"/>
+    <link rel="stylesheet" type="text/css" href="demo/demo.css"/>
+
+  </head>
+
+  <body style="height: 100vh;" ng-app="app">
+
+    <div ui-layout="{flow: 'column'}">
+
+        <div ui-layout-container size="85px" max-size="85px" min-size="85px">
+          <label>
+            Container Controls:
+          </label>
+
+          <div>
+            <button type="button" class="btn btn-xs btn-default"
+                ng-init="showGreen=true"
+                ng-click="showGreen=!showGreen" 
+                style="background-color: green; color: white">
+                {{(showGreen) ? "Hide" : "Show"}}
+            </button>
+          </div>
+
+          <div>
+            <button type="button" class="btn btn-xs btn-default" 
+                ng-init="showBlue=true"
+                ng-click="showBlue=!showBlue" 
+                style="background-color: blue; color: white">
+                {{(showBlue) ? "Hide" : "Show"}}
+            </button>
+          </div>
+
+          <div>
+            <button type="button" class="btn btn-xs btn-default"
+                ng-init="showYellow=true"
+                ng-click="showYellow=!showYellow" 
+                style="background-color: yellow; color: black">
+                {{(showYellow) ? "Hide" : "Show"}}
+            </button>
+          </div>
+
+          <hr>
+
+          <div>
+            <button type="button" class="btn btn-xs btn-default"
+                ng-init="rtFlow='row'"
+                ng-click="rtFlow=(rtFlow=='row')?'column':'row'" 
+                style="background-color: yellow; color: black">
+                Flow {{(rtFlow=='row') ? "Column" : "Row"}}
+            </button>
+          </div>
+        </div>
+
+        <!-------------- UI LAYOUT TEST ---------------->
+
+        <div ui-layout-container size="20%" max-size="50%"
+            show-container="{{showGreen}}"
+            style="background-color: green; color: white">
+            LEFT
+        </div>
+
+        <div ui-layout-container>
+
+            <div ui-layout flow="{{rtFlow}}">
+
+                <div ui-layout-container 
+                    show-container="{{showBlue}}"
+                    style="background-color: blue; color: white">
+                    TOP | LEFT
+                </div>
+
+                <div ui-layout-container size="30%" max-size="90%" min-size="10%"
+                    show-container="{{showYellow}}"
+                    style="background-color: yellow">
+                    BOTTOM | RIGHT
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- javascript -->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+    <script type="text/javascript" src="src/ui-layout.js"></script>
+    <script type="text/javascript">
+
+angular.module('app', ['ui.layout']);
+
+    </script>
+
+
+  </body>
+</html>
+
