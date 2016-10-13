@@ -69,9 +69,29 @@ angular.module('ui.layout', [])
     opts.collapsed = opts.collapsed || [];
     ctrl.opts = opts;
 
+    if((!ctrl.bounds.height) && (!ctrl.bounds.width)) {
+      // If [for example] the layout is in a tab and we change away and 
+      // come back we will have zero bounds, so update later.
+      $timeout(function() {
+          ctrl.bounds = $element[0].getBoundingClientRect();
+          ctrl.calculate();
+      }, 50);
+    }
+
     $scope.updateDisplay = function() {
       ctrl.calculate();
     };
+
+    angular.element($window).on('resize', function() {
+      if (!ctrl.bounds.width) {
+        // layout must have been not visible then resized
+        // to a larger size.
+        $timeout(function() {
+          ctrl.bounds = $element[0].getBoundingClientRect();
+          ctrl.calculate();
+        }, 50);
+      }
+    });
 
     $scope.$watch('flow', function(val, old) {
 
@@ -442,6 +462,15 @@ angular.module('ui.layout', [])
       var originalSize = availableSize;
       var usedSpace = 0;
       var numOfAutoContainers = 0;
+
+      // When we change from one tab and back the bounds will be
+      // zero for a short time.  If we run this routine when the
+      // bounds are zero the min/maxSizes will be zero and will
+      // not work properly.
+      if(!ctrl.bounds.width) {
+        return;
+      }
+
       if(ctrl.containers.length > 0 && $element.children().length > 0) {
 
         // calculate sizing for ctrl.containers
@@ -917,6 +946,13 @@ angular.module('ui.layout', [])
             //
             var i;
             var numOfSplitbars = 0;
+
+            if (!ctrl.bounds.width) {
+              // layout must have been not visible then resized
+              // to a larger size.  Let the controller handle this.
+              return;
+            }
+
             for (i = 0; i < ctrl.containers.length; i++) {
               if (LayoutContainer.isSplitbar(ctrl.containers[i])) {
                 numOfSplitbars++;

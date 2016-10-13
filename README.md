@@ -5,6 +5,7 @@ There were a few missing features from what I could tell:
 - Could not dynamically change the flow
 - Could not dynamically hide a contianer
 - Resizing in some cases would break the containers and they could not be resized
+- The ui-Layout didn't work in a tab.  If you leave the current tab and come back the sizes are all wrong.
 
 The code changes were done quickly and may be a little hackish.  Anyone who wants to clean this up is more than welcome.
 
@@ -17,6 +18,8 @@ The code changes were done quickly and may be a little hackish.  Anyone who want
 |        |                             |
 ----------------------------------------
 ```  
+
+There are some demos under `demo/forkDemo*.html`
 
 ## New to uiLayout
 
