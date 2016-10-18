@@ -83,6 +83,7 @@ angular.module('ui.layout', [])
     };
 
     angular.element($window).on('resize', function() {
+      ctrl.bounds = $element[0].getBoundingClientRect();
       if (!ctrl.bounds.width) {
         // layout must have been not visible then resized
         // to a larger size.
@@ -922,13 +923,65 @@ angular.module('ui.layout', [])
     return ctrl;
   }])
 
-  .directive('uiLayout', ['$window', 'LayoutContainer', function($window, LayoutContainer) {
+  .directive('uiLayout', ['$timeout', '$window', 'LayoutContainer', function($timeout, $window, LayoutContainer) {
     return {
       restrict: 'AE',
       controller: 'uiLayoutCtrl',
       scope: { flow: '@' },
 
       link: function(scope, element, attrs, ctrl) {
+
+        function recalcLayout() {
+
+          //--------------------
+          // HACK: If the container is small enough then the app is resized to
+          //       full screen the container will be zero in size and cannot
+          //       resize itself properly.  This hack code checks for various
+          //       error conditions and attempts to fix specific values.
+          //
+          var i;
+          var numOfSplitbars = 0;
+
+          if (!ctrl.bounds.width) {
+            // layout must have been not visible then resized
+            // to a larger size.  Let the controller handle this.
+            return;
+          }
+
+          ctrl.bounds = element[0].getBoundingClientRect();
+
+          for (i = 0; i < ctrl.containers.length; i++) {
+            if (LayoutContainer.isSplitbar(ctrl.containers[i])) {
+              numOfSplitbars++;
+            }
+          }
+
+          var dividerSize = parseInt(ctrl.opts.dividerSize);
+          var elementSize = element[0].getBoundingClientRect()[ctrl.sizeProperties.sizeProperty];
+          var availableSize = elementSize - (dividerSize * numOfSplitbars);
+
+          for (i = 0; i < ctrl.containers.length; i++) {
+            if (!LayoutContainer.isSplitbar(ctrl.containers[i])) {
+              if ((ctrl.containers[i].size <= 0) && (ctrl.containers[i].isShown)){
+                if(ctrl.isPercent(ctrl.containers[i].uncollapsedSize)) {
+                  ctrl.containers[i].size = ctrl.convertToPixels(ctrl.containers[i].uncollapsedSize, availableSize);
+                } else {
+                  ctrl.containers[i].size = parseInt(ctrl.containers[i].uncollapsedSize);
+                }
+                if ((isNaN(ctrl.containers[i].size)) || (ctrl.containers[i].size <= 0)) {
+                  ctrl.containers[i].size = 200;
+                }
+              }
+              if (ctrl.containers[i].maxSize === 0) {
+                ctrl.containers[i].maxSize = ctrl.containers[i].size;
+              }
+            }
+          }
+          //--------------------
+
+          ctrl.calculate();
+        } // recalcLayout
+
         scope.$watch(function () {
           return element[0][ctrl.sizeProperties.offsetSize];
         }, function() {
@@ -936,55 +989,21 @@ angular.module('ui.layout', [])
         });
 
         function onResize() {
-          scope.$evalAsync(function() {
-
-            //--------------------
-            // HACK: If the container is small enough then the app is resized to
-            //       full screen the container will be zero in size and cannot
-            //       resize itself properly.  This hack code checks for various
-            //       error conditions and attempts to fix specific values.
-            //
-            var i;
-            var numOfSplitbars = 0;
-
-            if (!ctrl.bounds.width) {
-              // layout must have been not visible then resized
-              // to a larger size.  Let the controller handle this.
-              return;
-            }
-
-            for (i = 0; i < ctrl.containers.length; i++) {
-              if (LayoutContainer.isSplitbar(ctrl.containers[i])) {
-                numOfSplitbars++;
-              }
-            }
-
-            var dividerSize = parseInt(ctrl.opts.dividerSize);
-            var elementSize = element[0].getBoundingClientRect()[ctrl.sizeProperties.sizeProperty];
-            var availableSize = elementSize - (dividerSize * numOfSplitbars);
-
-            for (i = 0; i < ctrl.containers.length; i++) {
-              if (!LayoutContainer.isSplitbar(ctrl.containers[i])) {
-                if ((ctrl.containers[i].size <= 0) && (ctrl.containers[i].isShown)){
-                  if(ctrl.isPercent(ctrl.containers[i].uncollapsedSize)) {
-                    ctrl.containers[i].size = ctrl.convertToPixels(ctrl.containers[i].uncollapsedSize, availableSize);
-                  } else {
-                    ctrl.containers[i].size = parseInt(ctrl.containers[i].uncollapsedSize);
-                  }
-                  if ((isNaN(ctrl.containers[i].size)) || (ctrl.containers[i].size <= 0)) {
-                    ctrl.containers[i].size = 200;
-                  }
-                }
-                if (ctrl.containers[i].maxSize === 0) {
-                  ctrl.containers[i].maxSize = ctrl.containers[i].size;
-                }
-              }
-            }
-            //--------------------
-
-            ctrl.calculate();
-          });
+          $timeout(function() {
+              recalcLayout();
+          }, 50);
         }
+
+        // This can be used to force a recalculation/redraw.
+        // This can be useful when using in a tab and the
+        // first tab with a layout looks fine, then you change
+        // to the other tab with a layout and it looks incorrect.
+        scope.$on('recalcLayout', function() {
+            $timeout(function() {
+              ctrl.bounds = element[0].getBoundingClientRect();
+              recalcLayout();
+          }, 50);
+        });
 
         angular.element($window).bind('resize', onResize);
 
