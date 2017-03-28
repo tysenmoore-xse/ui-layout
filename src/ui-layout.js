@@ -982,11 +982,13 @@ angular.module('ui.layout', [])
           ctrl.calculate();
         } // recalcLayout
 
-        scope.$watch(function () {
-          return element[0][ctrl.sizeProperties.offsetSize];
-        }, function() {
-          ctrl.calculate();
-        });
+        // Disable for now due to performance reasons:
+        // If deemed necessary, add back in.
+//      scope.$watch(function () {
+//        return element[0][ctrl.sizeProperties.offsetSize];
+//      }, function() {
+//        ctrl.calculate();
+//      });
 
         function onResize() {
           $timeout(function() {
@@ -1014,7 +1016,7 @@ angular.module('ui.layout', [])
     };
   }])
 
-  .directive('uiSplitbar', ['LayoutContainer', function(LayoutContainer) {
+  .directive('uiSplitbar', ['$timeout', 'LayoutContainer', function($timeout, LayoutContainer) {
     // Get all the page.
     var htmlElement = angular.element(document.body.parentElement);
 
@@ -1033,6 +1035,8 @@ angular.module('ui.layout', [])
         scope.splitbar = LayoutContainer.Splitbar();
         scope.splitbar.element = element;
 
+        scope.splitbarDebounce = { left:     null, top:     null,
+                                   prevLeft: null, prevTop: null };
         //icon <a> elements
         var prevButton = angular.element(element.children()[0]);
         var afterButton = angular.element(element.children()[1]);
@@ -1197,10 +1201,34 @@ angular.module('ui.layout', [])
         });
 
         scope.$watch('splitbar.left', function(newValue) {
-          element.css('left', newValue + 'px');
+          var timeOut = (newValue === 0) ? 100 : 50;
+          if (angular.isUndefined(newValue)) {
+            return;
+          }
+          if (scope.splitbarDebounce.left) {
+            $timeout.cancel(scope.splitbarDebounce.left);
+          }
+          scope.splitbarDebounce.left = $timeout(function(val) {
+            element.css('left', val + 'px');
+            scope.splitbarDebounce.left = null;
+          }, timeOut, true, newValue);
         });
+
         scope.$watch('splitbar.top', function(newValue) {
-          element.css('top', newValue + 'px');
+          var timeOut = (newValue === 0) ? 100 : 50;
+          if ((angular.isUndefined(newValue)) ||
+              (scope.splitbarDebounce.prevTop === newValue)) {
+            return;
+          }
+          scope.splitbarDebounce.prevTop = newValue;
+
+          if (scope.splitbarDebounce.top) {
+            $timeout.cancel(scope.splitbarDebounce.top);
+          }
+          scope.splitbarDebounce.top = $timeout(function(val) {
+            element.css('top', val + 'px');
+            scope.splitbarDebounce.top = null;
+          }, timeOut, true, newValue);
         });
 
         scope.$on('$destroy', function() {
@@ -1300,6 +1328,9 @@ angular.module('ui.layout', [])
                 });
 
                 scope.$watch('container.size', function(newValue) {
+                  if (angular.isUndefined(newValue)) {
+                    return;
+                  }
                   element.css(ctrl.sizeProperties.sizeProperty, newValue + 'px');
                   if(newValue === 0) {
                     element.addClass('ui-layout-hidden');
@@ -1308,11 +1339,37 @@ angular.module('ui.layout', [])
                   }
                 });
 
+                if (angular.isUndefined(scope.containerDebounce)) {
+                  scope.containerDebounce = { left:     null, top:     null,
+                                              prevLeft: null, prevTop: null };
+                }
+
                 scope.$watch('container.left', function(newValue) {
-                  element.css('left', newValue + 'px');
+                  var timeOut = (newValue === 0) ? 100 : 50;
+                  if (angular.isUndefined(newValue)) {
+                    return;
+                  }
+                  if (scope.containerDebounce.left) {
+                    $timeout.cancel(scope.containerDebounce.left);
+                  }
+                  scope.containerDebounce.left = $timeout(function(val) {
+                    element.css('left', val + 'px');
+                    scope.containerDebounce.left = null;
+                  }, timeOut, true, newValue);
                 });
+
                 scope.$watch('container.top', function(newValue) {
-                  element.css('top', newValue + 'px');
+                  var timeOut = (newValue === 0) ? 100 : 50;
+                  if (angular.isUndefined(newValue)) {
+                    return;
+                  }
+                  if (scope.containerDebounce.top) {
+                    $timeout.cancel(scope.containerDebounce.top);
+                  }
+                  scope.containerDebounce.top = $timeout(function(val) {
+                    element.css('top', val + 'px');
+                    scope.containerDebounce.top = null;
+                  }, timeOut, true, newValue);
                 });
 
                 scope.$watch('showContainer', function(val, old) {
@@ -1325,7 +1382,7 @@ angular.module('ui.layout', [])
                 if (scope.showContainer === "false") {
                   $timeout(function(){
                     _showContainer(false);
-                  });
+                  }, 50, false);
                 }
 
                 //TODO: add ability to disable auto-adding a splitbar after the container
