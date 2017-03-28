@@ -3,13 +3,14 @@
 
 There were a few missing features from what I could tell:
 - Could not dynamically change the flow
-- Could not dynamically hide a contianer
+- Could not dynamically hide a container
 - Resizing in some cases would break the containers and they could not be resized
 - The ui-Layout didn't work in a tab.  If you leave the current tab and come back the sizes are all wrong.
+- Added performance fix in [Pull Request 208](https://github.com/angular-ui/ui-layout/pull/208)--makes a huge difference
 
 The code changes were done quickly and may be a little hackish.  Anyone who wants to clean this up is more than welcome.
 
-**NOTE:** Exhaustive testing has not been done.  Currently the main usecase has been:
+**NOTE:** Exhaustive testing has not been done.  Currently the main use case has been:
 ```
 ----------------------------------------
 |        |                             |

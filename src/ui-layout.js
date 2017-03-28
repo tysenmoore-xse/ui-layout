@@ -320,7 +320,7 @@ angular.module('ui.layout', [])
             debounceEvent = $timeout(function() {
               $scope.$broadcast('ui.layout.resize', beforeContainer, afterContainer);
               debounceEvent = null;
-            }, 50);
+            }, 50, false);
           }
         }
       }
