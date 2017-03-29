@@ -1035,6 +1035,7 @@ angular.module('ui.layout', [])
         scope.splitbar = LayoutContainer.Splitbar();
         scope.splitbar.element = element;
 
+        scope.splitbarMoving   = false;
         scope.splitbarDebounce = { left:     null, top:     null,
                                    prevLeft: null, prevTop: null };
         //icon <a> elements
@@ -1185,6 +1186,9 @@ angular.module('ui.layout', [])
           e.preventDefault();
           e.stopPropagation();
 
+          // Track that we are moving the splitbar
+          scope.splitbarMoving = true;
+
           htmlElement.on('mousemove touchmove', function(event) {
             scope.$apply(angular.bind(ctrl, ctrl.mouseMoveHandler, event));
           });
@@ -1192,6 +1196,9 @@ angular.module('ui.layout', [])
         });
 
         htmlElement.on('mouseup touchend', function(event) {
+          // Clear that we are moving the splitbar
+          scope.splitbarMoving = false;
+
           scope.$apply(angular.bind(ctrl, ctrl.mouseUpHandler, event));
           htmlElement.off('mousemove touchmove');
         });
@@ -1202,12 +1209,23 @@ angular.module('ui.layout', [])
 
         scope.$watch('splitbar.left', function(newValue) {
           var timeOut = (newValue === 0) ? 100 : 50;
-          if (angular.isUndefined(newValue)) {
+          if ((angular.isUndefined(newValue)) ||
+              (scope.splitbarDebounce.prevLeft === newValue)) {
             return;
           }
+          scope.splitbarDebounce.prevLeft = newValue;
+
           if (scope.splitbarDebounce.left) {
             $timeout.cancel(scope.splitbarDebounce.left);
           }
+
+          // If we are moving the splitbar, keep it reactive
+          if (scope.splitbarMoving) {
+            element.css('left', newValue + 'px');
+            scope.splitbarDebounce.left = null;
+            return;
+          }
+
           scope.splitbarDebounce.left = $timeout(function(val) {
             element.css('left', val + 'px');
             scope.splitbarDebounce.left = null;
@@ -1225,6 +1243,14 @@ angular.module('ui.layout', [])
           if (scope.splitbarDebounce.top) {
             $timeout.cancel(scope.splitbarDebounce.top);
           }
+
+          // If we are moving the splitbar, keep it reactive
+          if (scope.splitbarMoving) {
+            element.css('top', newValue + 'px');
+            scope.splitbarDebounce.top = null;
+            return;
+          }
+
           scope.splitbarDebounce.top = $timeout(function(val) {
             element.css('top', val + 'px');
             scope.splitbarDebounce.top = null;
@@ -1339,37 +1365,18 @@ angular.module('ui.layout', [])
                   }
                 });
 
-                if (angular.isUndefined(scope.containerDebounce)) {
-                  scope.containerDebounce = { left:     null, top:     null,
-                                              prevLeft: null, prevTop: null };
-                }
-
                 scope.$watch('container.left', function(newValue) {
-                  var timeOut = (newValue === 0) ? 100 : 50;
                   if (angular.isUndefined(newValue)) {
                     return;
                   }
-                  if (scope.containerDebounce.left) {
-                    $timeout.cancel(scope.containerDebounce.left);
-                  }
-                  scope.containerDebounce.left = $timeout(function(val) {
-                    element.css('left', val + 'px');
-                    scope.containerDebounce.left = null;
-                  }, timeOut, true, newValue);
+                  element.css('left', newValue + 'px');
                 });
 
                 scope.$watch('container.top', function(newValue) {
-                  var timeOut = (newValue === 0) ? 100 : 50;
                   if (angular.isUndefined(newValue)) {
                     return;
                   }
-                  if (scope.containerDebounce.top) {
-                    $timeout.cancel(scope.containerDebounce.top);
-                  }
-                  scope.containerDebounce.top = $timeout(function(val) {
-                    element.css('top', val + 'px');
-                    scope.containerDebounce.top = null;
-                  }, timeOut, true, newValue);
+                  element.css('top', newValue + 'px');
                 });
 
                 scope.$watch('showContainer', function(val, old) {
