@@ -98,7 +98,7 @@ angular.module('ui.layout', [])
       }
     });
 
-    $scope.$watch('flow', function(val, old) {
+    $scope.$on( '$destroy', $scope.$watch('flow', function(val, old) {
 
         var x,y;
         var obj;
@@ -259,7 +259,7 @@ angular.module('ui.layout', [])
           }
 
         });
-    });
+    }) );
 
     var debounceEvent;
     function draw() {
@@ -1004,12 +1004,12 @@ angular.module('ui.layout', [])
         // This can be useful when using in a tab and the
         // first tab with a layout looks fine, then you change
         // to the other tab with a layout and it looks incorrect.
-        scope.$on('recalcLayout', function() {
+        scope.$on('$destroy', scope.$on('recalcLayout', function() {
             $timeout(function() {
               ctrl.bounds = element[0].getBoundingClientRect();
               recalcLayout();
           }, 50);
-        });
+        }));
 
         angular.element($window).bind('resize', onResize);
 
@@ -1208,11 +1208,11 @@ angular.module('ui.layout', [])
           htmlElement.off('mousemove touchmove');
         });
 
-        scope.$watch('splitbar.size', function(newValue) {
+        scope.$on( '$destroy', scope.$watch('splitbar.size', function(newValue) {
           element.css(ctrl.sizeProperties.sizeProperty, newValue + 'px');
-        });
+        }));
 
-        scope.$watch('splitbar.left', function(newValue) {
+        scope.$on( '$destroy', scope.$watch('splitbar.left', function(newValue) {
           var timeOut = (newValue === 0) ? 100 : 50;
           if ((angular.isUndefined(newValue)) ||
               (scope.splitbarDebounce.prevLeft === newValue)) {
@@ -1235,9 +1235,9 @@ angular.module('ui.layout', [])
             element.css('left', val + 'px');
             scope.splitbarDebounce.left = null;
           }, timeOut, true, newValue);
-        });
+        }));
 
-        scope.$watch('splitbar.top', function(newValue) {
+        scope.$on( '$destroy', scope.$watch('splitbar.top', function(newValue) {
           var timeOut = (newValue === 0) ? 100 : 50;
           if ((angular.isUndefined(newValue)) ||
               (scope.splitbarDebounce.prevTop === newValue)) {
@@ -1260,7 +1260,7 @@ angular.module('ui.layout', [])
             element.css('top', val + 'px');
             scope.splitbarDebounce.top = null;
           }, timeOut, true, newValue);
-        });
+        }));
 
         scope.$on('$destroy', function() {
           htmlElement.off('mouseup touchend mousemove touchmove');
@@ -1352,13 +1352,13 @@ angular.module('ui.layout', [])
                 var animationClass = ctrl.isUsingColumnFlow ? 'animate-column' : 'animate-row';
                 element.addClass(animationClass);
 
-                scope.$watch('collapsed', function (val, old) {
+                scope.$on( '$destroy', scope.$watch('collapsed', function (val, old) {
                   if (angular.isDefined(old) && val !== old) {
                     ctrl.toggleContainer(scope.container.index);
                   }
-                });
+                }));
 
-                scope.$watch('container.size', function(newValue) {
+                scope.$on( '$destroy', scope.$watch('container.size', function(newValue) {
                   if (angular.isUndefined(newValue)) {
                     return;
                   }
@@ -1368,28 +1368,28 @@ angular.module('ui.layout', [])
                   } else {
                     element.removeClass('ui-layout-hidden');
                   }
-                });
+                }));
 
-                scope.$watch('container.left', function(newValue) {
+                scope.$on( '$destroy', scope.$watch('container.left', function(newValue) {
                   if (angular.isUndefined(newValue)) {
                     return;
                   }
                   element.css('left', newValue + 'px');
-                });
+                }));
 
-                scope.$watch('container.top', function(newValue) {
+                scope.$on( '$destroy', scope.$watch('container.top', function(newValue) {
                   if (angular.isUndefined(newValue)) {
                     return;
                   }
                   element.css('top', newValue + 'px');
-                });
+                }));
 
-                scope.$watch('showContainer', function(val, old) {
+                scope.$on( '$destroy', scope.$watch('showContainer', function(val, old) {
                   if (val === old) {
                     return;
                   }
                   _showContainer(val);
-                });
+                }));
 
                 if (scope.showContainer === "false") {
                   $timeout(function(){
