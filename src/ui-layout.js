@@ -86,7 +86,7 @@ angular.module('ui.layout', [])
       ctrl.calculate();
     };
 
-    angular.element($window).on('resize', function() {
+    $scope.resizeFn = function() {
       ctrl.bounds = $element[0].getBoundingClientRect();
       if (!ctrl.bounds.width) {
         // layout must have been not visible then resized
@@ -96,6 +96,12 @@ angular.module('ui.layout', [])
           ctrl.calculate();
         }, 50);
       }
+    };
+
+    angular.element($window).on('resize', $scope.resizeFn);
+
+    $scope.$on('$destroy', function() {
+        angular.element($window).off('resize', $scope.resizeFn);
     });
 
     $scope.$on( '$destroy', $scope.$watch('flow', function(val, old) {
